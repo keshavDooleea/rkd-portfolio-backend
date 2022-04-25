@@ -11,4 +11,8 @@ export class UserService {
       messages: [],
     });
   }
+
+  async getUserById(userId: string): Promise<UserDocument> {
+    return await this.userRepository.findById({ _id: userId });
+  }
 }
