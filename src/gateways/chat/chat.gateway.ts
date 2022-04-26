@@ -7,9 +7,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { CHAT_SOCKET_NAMESPACE } from 'src/utils/constants';
+import { CHAT_SOCKET_NAMESPACE, SocketBody } from 'src/utils/constants';
 import { UserService } from 'src/users/user.service';
-import { MyJwtService } from 'src/jwt/jwt.service';
+import { Message } from 'src/users/schemas/message.schema';
 
 @WebSocketGateway({ namespace: CHAT_SOCKET_NAMESPACE })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -18,47 +18,67 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private socketUsers: Map<string, string> = new Map();
 
-  constructor(
-    private readonly userService: UserService,
-    private readonly jwtService: MyJwtService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   async handleConnection(client: Socket) {
     const userToken = JSON.parse(client.handshake.query.userToken as string);
     let userId: string;
 
     if (!userToken) {
-      console.log('Generating new User and JWT Token');
       const newUser = await this.userService.createNewUser();
       userId = newUser._id.toString();
+      console.log(`Created new user with id ${userId}`);
 
       // update client's token
-      const newUsertoken = await this.jwtService.sign(userId);
+      const newUsertoken = await this.userService.getNewUserToken(userId);
       client.emit('updateToken', newUsertoken);
     } else {
-      // deserialize token to get userId
-      userId = await this.jwtService.verify(userToken);
-      const mongoUser = await this.userService.getUserById(userId);
-      console.log('mongoUser', mongoUser);
+      // existing User: deserialize token to get userId
+      userId = await this.userService.getUserIdFromToken(userToken);
     }
+
+    console.log(`New client connected: ${userId}`);
 
     // put to map
     if (!this.socketUsers.has(userId)) {
       client.join(userId);
       this.socketUsers.set(client.id, userId);
     }
-
-    console.log(this.socketUsers);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    console.log(`Client disconnected: ${this.socketUsers.get(client.id)}`);
     this.socketUsers.delete(client.id);
   }
 
-  @SubscribeMessage('message')
-  handleMessage(@MessageBody() body: any): void {
-    console.log('bodyy', body);
-    this.server.emit('message', 'GOT IT');
+  @SubscribeMessage('getInitialMessages')
+  async handleGetMessages(@MessageBody() body: SocketBody): Promise<Message[]> {
+    if (!body.userToken) return [];
+
+    const userId = await this.userService.getUserIdFromToken(body.userToken);
+
+    try {
+      const userWithMessages = await this.userService.getUserMessages(userId);
+      return userWithMessages.messages;
+    } catch (error) {
+      console.log(`Error retrieving messages for user ${userId}`);
+      return [];
+    }
+  }
+
+  @SubscribeMessage('newUserMessage')
+  async handleUserMessage(@MessageBody() body: SocketBody): Promise<void> {
+    try {
+      const userId = await this.userService.getUserIdFromToken(body.userToken);
+      const savedMessage = await this.userService.saveMessage(
+        body.data,
+        body.userToken,
+        'User',
+      );
+
+      this.server.to(userId).emit('savedMessage', savedMessage);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

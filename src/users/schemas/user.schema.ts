@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Message, MessageSchema } from './message.schema';
-import { Document } from 'mongoose';
+import { Message } from './message.schema';
+import { Document, Types } from 'mongoose';
 
 @Schema()
 export class User {
-  @Prop({ type: [MessageSchema], default: [], ref: Message.name })
+  @Prop({ type: [Types.ObjectId], default: [], ref: Message.name })
   messages: Message[];
 }
 
