@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatGateway } from 'src/gateways/chat/chat.gateway';
+import { ChatController } from './controllers/chat.controller';
 import { UserModule } from './users/user.module';
 
 @Module({
@@ -12,7 +13,7 @@ import { UserModule } from './users/user.module';
     ),
     UserModule,
   ],
-  controllers: [],
+  controllers: [ChatController],
   providers: [ChatGateway],
 })
 export class AppModule {}
