@@ -20,6 +20,10 @@ export class UserRepository {
     return await this.userModel.findById(userFilterQuery);
   }
 
+  async findAll(): Promise<UserDocument[]> {
+    return await this.userModel.find();
+  }
+
   async findUserMessages(
     userFilterQuery: FilterQuery<User>,
   ): Promise<UserDocument> {

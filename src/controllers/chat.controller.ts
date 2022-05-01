@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { MyJwtService } from 'src/jwt/jwt.service';
+import { UserTokenManager } from 'src/users/user-token.manager';
 
 interface IAuthPassword {
   password: string;
@@ -16,18 +17,19 @@ interface IAuthPassword {
 
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly jwtService: MyJwtService) {}
+  constructor(
+    private readonly jwtService: MyJwtService,
+    private readonly userTokenManager: UserTokenManager,
+  ) {}
 
   @Get('/token/:id')
   @HttpCode(HttpStatus.OK)
   async onVerifyChatToken(@Param() params) {
-    const token = params.id;
-
-    if (!token || token === 'null') return false;
-
-    const password = await this.jwtService.verifyChatToken(token);
-
-    return { isValid: password === process.env.RKD_CHAT_AUTH_PASSWORD };
+    return {
+      isValid: await this.userTokenManager.doesChatTokenMatchPassword(
+        params.id,
+      ),
+    };
   }
 
   @Post('/auth')

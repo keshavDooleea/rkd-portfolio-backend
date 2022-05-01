@@ -17,6 +17,8 @@ export class UserService {
     });
   }
 
+  getRKDId = () => process.env.RKD_CHAT_MONGO_ID;
+
   async getUserById(userId: string): Promise<UserDocument> {
     return await this.userRepository.findById({ _id: userId });
   }
@@ -38,13 +40,15 @@ export class UserService {
     return await this.userRepository.findUserMessages({ _id: userId });
   }
 
+  async getAllUsers(): Promise<UserDocument[]> {
+    return await this.userRepository.findAll();
+  }
+
   async saveMessage(
+    userId: string,
     message: string,
-    userToken: string,
     author: MessageAuthor,
   ): Promise<Message> {
-    const userId = await this.getUserIdFromToken(userToken);
-
     const newMessage: Message = {
       userId,
       message,

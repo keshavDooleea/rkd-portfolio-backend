@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MyJwtService } from 'src/jwt/jwt.service';
 import { Message, MessageSchema } from 'src/users/schemas/message.schema';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
+import { UserTokenManager } from './user-token.manager';
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
@@ -15,7 +16,7 @@ import { UserService } from './user.service';
     ]),
     JwtModule.register({ secret: `${process.env.JWT_SECRET_KEY}` }),
   ],
-  providers: [MyJwtService, UserService, UserRepository],
-  exports: [MyJwtService, UserService, UserRepository],
+  providers: [MyJwtService, UserService, UserTokenManager, UserRepository],
+  exports: [MyJwtService, UserService, UserTokenManager, UserRepository],
 })
 export class UserModule {}
