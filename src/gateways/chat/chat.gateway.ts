@@ -52,6 +52,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     console.log(`New client connected: ${userId}`);
     this.roomManager.addNewRoom(userId, client);
+    this.roomManager.emitUpdateRooms(this.server);
 
     if (isRKD === 'true') {
       this.roomManager.RKDjoinAllRooms(client);
@@ -60,6 +61,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     this.roomManager.disconnect(client.id);
+    this.roomManager.emitUpdateRooms(this.server);
   }
 
   @SubscribeMessage('RKDjoinAllRooms')

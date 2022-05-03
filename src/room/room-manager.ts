@@ -1,4 +1,4 @@
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 
 export class RoomManager {
   // room = userId
@@ -45,5 +45,9 @@ export class RoomManager {
     return Array.from(this.rooms.keys()).filter(
       (roomIds) => roomIds !== this.rkdId,
     );
+  }
+
+  emitUpdateRooms(server: Server) {
+    server.emit('updatedConnectedRooms', this.getConnectedRooms());
   }
 }
