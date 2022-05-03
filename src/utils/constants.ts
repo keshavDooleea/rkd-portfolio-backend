@@ -7,3 +7,8 @@ export interface SocketBody {
   userId: string;
   room: string;
 }
+
+export interface UnreadMessageBody {
+  userId: string;
+  unreadCount: number;
+}

@@ -8,11 +8,16 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { CHAT_SOCKET_NAMESPACE, SocketBody } from 'src/utils/constants';
+import {
+  CHAT_SOCKET_NAMESPACE,
+  SocketBody,
+  UnreadMessageBody,
+} from 'src/utils/constants';
 import { UserService } from 'src/users/user.service';
 import { Message } from 'src/users/schemas/message.schema';
 import { UserTokenManager } from 'src/users/user-token.manager';
 import { UserDocument } from 'src/users/schemas/user.schema';
+import { AdminService } from 'src/admin/admin.service';
 
 @WebSocketGateway({ namespace: CHAT_SOCKET_NAMESPACE })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -23,6 +28,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private rooms: Map<string, string> = new Map();
 
   constructor(
+    private readonly adminService: AdminService,
     private readonly userService: UserService,
     private readonly userTokenManager: UserTokenManager,
   ) {}
@@ -156,6 +162,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return Array.from(this.rooms.keys()).filter(
         (roomIds) => roomIds !== process.env.RKD_CHAT_MONGO_ID,
       );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @SubscribeMessage('saveUnreadMessage')
+  async saveUnreadMessage(
+    @MessageBody() body: UnreadMessageBody,
+  ): Promise<void> {
+    try {
+      await this.adminService.saveUnreadMessage(body);
     } catch (error) {
       console.log(error);
     }
