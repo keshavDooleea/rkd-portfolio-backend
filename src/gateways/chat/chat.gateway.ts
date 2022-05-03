@@ -17,8 +17,8 @@ import { UserService } from 'src/users/user.service';
 import { Message } from 'src/users/schemas/message.schema';
 import { UserTokenManager } from 'src/users/user-token.manager';
 import { UserDocument } from 'src/users/schemas/user.schema';
-import { AdminService } from 'src/admin/admin.service';
 import { RoomManager } from 'src/room/room-manager';
+import { AdminUnreadMessageService } from 'src/unread-messages/admin-unread-message.service';
 
 @WebSocketGateway({ namespace: CHAT_SOCKET_NAMESPACE })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -28,7 +28,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomManager: RoomManager;
 
   constructor(
-    private readonly adminService: AdminService,
+    private readonly adminService: AdminUnreadMessageService,
     private readonly userService: UserService,
     private readonly userTokenManager: UserTokenManager,
   ) {
