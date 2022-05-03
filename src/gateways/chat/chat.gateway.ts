@@ -18,20 +18,22 @@ import { Message } from 'src/users/schemas/message.schema';
 import { UserTokenManager } from 'src/users/user-token.manager';
 import { UserDocument } from 'src/users/schemas/user.schema';
 import { AdminService } from 'src/admin/admin.service';
+import { RoomManager } from 'src/room/room-manager';
 
 @WebSocketGateway({ namespace: CHAT_SOCKET_NAMESPACE })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
 
-  // room = userId
-  private rooms: Map<string, string> = new Map();
+  private roomManager: RoomManager;
 
   constructor(
     private readonly adminService: AdminService,
     private readonly userService: UserService,
     private readonly userTokenManager: UserTokenManager,
-  ) {}
+  ) {
+    this.roomManager = new RoomManager(this.userService.getRKDId());
+  }
 
   async handleConnection(@ConnectedSocket() client: Socket) {
     const userToken = JSON.parse(client.handshake.query.userToken as string);
@@ -49,44 +51,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     console.log(`New client connected: ${userId}`);
-
-    // put to map
-    if (!this.rooms.has(userId)) {
-      client.join(userId);
-      this.rooms.set(userId, client.id);
-    }
+    this.roomManager.addNewRoom(userId, client);
 
     if (isRKD === 'true') {
-      this.RKDjoinAllRooms(client);
+      this.roomManager.RKDjoinAllRooms(client);
     }
   }
 
   handleDisconnect(client: Socket) {
-    this.rooms.forEach((clientId, userId) => {
-      if (clientId === client.id) {
-        console.log(`Client disconnected: ${userId}`);
-        this.rooms.delete(userId);
-        return;
-      }
-    });
-  }
-
-  private RKDjoinAllRooms(@ConnectedSocket() client: Socket) {
-    const availableRooms = Array.from(this.rooms.keys()).filter((room) => {
-      if (room !== this.userService.getRKDId()) {
-        client.join(room);
-        return room;
-      }
-    });
-
-    console.log(`RKD joined ${availableRooms.length} rooms`);
+    this.roomManager.disconnect(client.id);
   }
 
   @SubscribeMessage('RKDjoinAllRooms')
   async handleRKDjoinAllRooms(
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    this.RKDjoinAllRooms(client);
+    this.roomManager.RKDjoinAllRooms(client);
   }
 
   @SubscribeMessage('getInitialMessages')
@@ -126,7 +106,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(userId).emit('savedMessage', savedMessage);
 
       // save message if im offline
-      if (!this.rooms.has(this.userService.getRKDId())) {
+      if (!this.roomManager.isRkdConnected()) {
         await this.adminService.saveUnreadMessage(userId);
       }
     } catch (error) {
@@ -164,9 +144,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('getConnectedRooms')
   async getConnectedRooms(): Promise<any> {
     try {
-      return Array.from(this.rooms.keys()).filter(
-        (roomIds) => roomIds !== process.env.RKD_CHAT_MONGO_ID,
-      );
+      return this.roomManager.getConnectedRooms();
     } catch (error) {
       console.log(error);
     }
