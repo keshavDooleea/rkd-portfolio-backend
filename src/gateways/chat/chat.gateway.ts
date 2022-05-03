@@ -126,7 +126,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(userId).emit('savedMessage', savedMessage);
 
       // save message if im offline
-      await this.adminService.saveUnreadMessage(userId);
+      if (!this.rooms.has(this.userService.getRKDId())) {
+        await this.adminService.saveUnreadMessage(userId);
+      }
     } catch (error) {
       console.log(error);
     }
