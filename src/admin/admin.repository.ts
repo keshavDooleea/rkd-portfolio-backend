@@ -25,6 +25,10 @@ export class AdminRepository {
     );
   }
 
+  async removeUnreadMessages(userId: string) {
+    await this.unreadMesssageModel.findByIdAndDelete(userId);
+  }
+
   async findAllUnreadMessages(): Promise<UnreadMessageDocument[]> {
     return await this.unreadMesssageModel.find();
   }

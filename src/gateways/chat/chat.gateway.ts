@@ -192,4 +192,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(error);
     }
   }
+
+  @SubscribeMessage('clearUnreadMessages')
+  async clearUnreadMessages(
+    @MessageBody() body: UnreadMessageBody,
+  ): Promise<void> {
+    try {
+      await this.adminService.removeUnreadMessages(body.userId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

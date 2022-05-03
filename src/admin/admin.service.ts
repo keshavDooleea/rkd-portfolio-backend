@@ -17,4 +17,8 @@ export class AdminService {
   async getAllUnreadMessages(): Promise<UnreadMessageDocument[]> {
     return await this.adminRepository.findAllUnreadMessages();
   }
+
+  async removeUnreadMessages(userId: string): Promise<void> {
+    await this.adminRepository.removeUnreadMessages(userId);
+  }
 }
