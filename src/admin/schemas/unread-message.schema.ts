@@ -6,7 +6,7 @@ export class UnreadMessage {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, default: 0 })
   count: number;
 }
 

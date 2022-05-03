@@ -124,6 +124,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         'User',
       );
       this.server.to(userId).emit('savedMessage', savedMessage);
+
+      // save message if im offline
+      await this.adminService.saveUnreadMessage(userId);
     } catch (error) {
       console.log(error);
     }
@@ -172,7 +175,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: UnreadMessageBody,
   ): Promise<void> {
     try {
-      await this.adminService.saveUnreadMessage(body);
+      await this.adminService.saveUnreadMessage(body.userId);
     } catch (error) {
       console.log(error);
     }
