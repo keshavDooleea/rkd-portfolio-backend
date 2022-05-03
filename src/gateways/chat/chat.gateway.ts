@@ -19,6 +19,7 @@ import { UserTokenManager } from 'src/users/user-token.manager';
 import { UserDocument } from 'src/users/schemas/user.schema';
 import { RoomManager } from 'src/room/room-manager';
 import { AdminUnreadMessageService } from 'src/unread-messages/admin-unread-message.service';
+import { UserUnreadMessageService } from 'src/unread-messages/user-unread-message.service';
 
 @WebSocketGateway({ namespace: CHAT_SOCKET_NAMESPACE })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -28,7 +29,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private roomManager: RoomManager;
 
   constructor(
-    private readonly adminService: AdminUnreadMessageService,
+    private readonly adminUnreadMsgService: AdminUnreadMessageService,
+    private readonly userUnreadMsgService: UserUnreadMessageService,
     private readonly userService: UserService,
     private readonly userTokenManager: UserTokenManager,
   ) {
@@ -71,6 +73,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.roomManager.RKDjoinAllRooms(client);
   }
 
+  @SubscribeMessage('RKDjoinRoom')
+  async handleRKDjoinRoom(
+    @MessageBody() body: SocketBody,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    this.roomManager.addNewRoom(body.userId, client);
+  }
+
   @SubscribeMessage('getInitialMessages')
   async handleGetMessages(@MessageBody() body: SocketBody): Promise<Message[]> {
     if (!body.userToken) return [];
@@ -109,7 +119,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // save message if im offline
       if (!this.roomManager.isRkdConnected()) {
-        await this.adminService.saveUnreadMessage(userId);
+        await this.adminUnreadMsgService.saveUnreadMessage(userId);
       }
     } catch (error) {
       console.log(error);
@@ -125,6 +135,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         'RKD',
       );
       this.server.to(body.room).emit('savedMessage', savedMessage);
+
+      // save message if user is offline
+      if (!this.roomManager.isUserConnected(body.room)) {
+        await this.userUnreadMsgService.saveUnreadMessage(body.room);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -157,7 +172,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: UnreadMessageBody,
   ): Promise<void> {
     try {
-      await this.adminService.saveUnreadMessage(body.userId);
+      await this.adminUnreadMsgService.saveUnreadMessage(body.userId);
     } catch (error) {
       console.log(error);
     }
@@ -166,7 +181,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('getUnreadMessages')
   async getUnreadMessages(): Promise<UnreadMessageBody[]> {
     try {
-      const unreadMessagesDocs = await this.adminService.getAllUnreadMessages();
+      const unreadMessagesDocs =
+        await this.adminUnreadMsgService.getAllUnreadMessages();
       return unreadMessagesDocs.map((doc) => {
         return {
           userId: doc._id,
@@ -183,7 +199,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: UnreadMessageBody,
   ): Promise<void> {
     try {
-      await this.adminService.removeUnreadMessages(body.userId);
+      await this.adminUnreadMsgService.removeUnreadMessages(body.userId);
     } catch (error) {
       console.log(error);
     }

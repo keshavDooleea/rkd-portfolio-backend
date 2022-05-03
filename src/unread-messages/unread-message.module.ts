@@ -8,6 +8,8 @@ import {
   UserUnreadMessage,
   UserUnreadMessageSchema,
 } from './schemas/unread-message.schema';
+import { UserUnreadMessageService } from './user-unread-message.service';
+import { UserUnreadMessageRepository } from './user.repository';
 
 @Module({
   imports: [
@@ -16,7 +18,17 @@ import {
       { name: UserUnreadMessage.name, schema: UserUnreadMessageSchema },
     ]),
   ],
-  providers: [AdminUnreadMessageService, AdminUnreadMessageRepository],
-  exports: [AdminUnreadMessageService, AdminUnreadMessageRepository],
+  providers: [
+    AdminUnreadMessageService,
+    AdminUnreadMessageRepository,
+    UserUnreadMessageService,
+    UserUnreadMessageRepository,
+  ],
+  exports: [
+    AdminUnreadMessageService,
+    AdminUnreadMessageRepository,
+    UserUnreadMessageService,
+    UserUnreadMessageRepository,
+  ],
 })
 export class UnreadMessageModule {}

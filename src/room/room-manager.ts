@@ -37,8 +37,12 @@ export class RoomManager {
     console.log(`RKD joined ${availableRooms.length} rooms`);
   }
 
+  isUserConnected(userId: string) {
+    return this.rooms.has(userId);
+  }
+
   isRkdConnected() {
-    return this.rooms.has(this.rkdId);
+    return this.isUserConnected(this.rkdId);
   }
 
   getConnectedRooms() {
