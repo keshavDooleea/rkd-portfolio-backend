@@ -24,4 +24,8 @@ export class AdminRepository {
       options,
     );
   }
+
+  async findAllUnreadMessages(): Promise<UnreadMessageDocument[]> {
+    return await this.unreadMesssageModel.find();
+  }
 }

@@ -177,4 +177,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(error);
     }
   }
+
+  @SubscribeMessage('getUnreadMessages')
+  async getUnreadMessages(): Promise<UnreadMessageBody[]> {
+    try {
+      const unreadMessagesDocs = await this.adminService.getAllUnreadMessages();
+      return unreadMessagesDocs.map((doc) => {
+        return {
+          userId: doc._id,
+          unreadCount: doc.count,
+        } as UnreadMessageBody;
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

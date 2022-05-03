@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UnreadMessageBody } from 'src/utils/constants';
 import { AdminRepository } from './admin.repository';
+import { UnreadMessageDocument } from './schemas/unread-message.schema';
 
 @Injectable()
 export class AdminService {
@@ -11,5 +12,9 @@ export class AdminService {
     const updateQuery = { count: unreadCount };
     const options = { upsert: true };
     await this.adminRepository.update(userId, updateQuery, options);
+  }
+
+  async getAllUnreadMessages(): Promise<UnreadMessageDocument[]> {
+    return await this.adminRepository.findAllUnreadMessages();
   }
 }
