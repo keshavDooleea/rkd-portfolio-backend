@@ -1,8 +1,13 @@
 import { Socket, Server } from 'socket.io';
 
+interface IChatRoomDetail {
+  socketId: string;
+  isChatOpen: boolean;
+}
+
 export class RoomManager {
   // room = userId
-  private rooms: Map<string, string> = new Map();
+  private rooms: Map<string, IChatRoomDetail> = new Map();
   private rkdId: string;
 
   constructor(RKD_ID: string) {
@@ -12,13 +17,13 @@ export class RoomManager {
   addNewRoom(userId: string, client: Socket) {
     if (!this.rooms.has(userId)) {
       client.join(userId);
-      this.rooms.set(userId, client.id);
+      this.rooms.set(userId, { socketId: client.id, isChatOpen: false });
     }
   }
 
   disconnect(client: Socket) {
-    this.rooms.forEach((clientId, userId) => {
-      if (clientId === client.id) {
+    this.rooms.forEach((room, userId) => {
+      if (room.socketId === client.id) {
         client.leave(userId);
         this.rooms.delete(userId);
         console.log(`Client disconnected: ${userId}`);
@@ -54,5 +59,17 @@ export class RoomManager {
 
   emitUpdateRooms(server: Server) {
     server.emit('updatedConnectedRooms', this.getConnectedRooms());
+  }
+
+  openUserChat(userId: string) {
+    this.rooms.get(userId).isChatOpen = true;
+  }
+
+  closeUserChat(userId: string) {
+    this.rooms.get(userId).isChatOpen = false;
+  }
+
+  isUserChatOpen(userId: string): boolean {
+    return this.rooms.get(userId).isChatOpen;
   }
 }

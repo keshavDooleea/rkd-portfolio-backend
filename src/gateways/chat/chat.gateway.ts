@@ -131,10 +131,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       this.server.to(body.room).emit('savedMessage', savedMessage);
 
-      // save message if user is offline
-      if (!this.roomManager.isUserConnected(body.room)) {
-        await this.userUnreadMsgService.saveUnreadMessage(body.room);
+      // save message if user is offline or user's chat is closed
+      const isUserOnline = this.roomManager.isUserConnected(body.room);
+      const isChatOpen = this.roomManager.isUserChatOpen(body.room);
 
+      if (!isUserOnline || !isChatOpen) {
+        await this.userUnreadMsgService.saveUnreadMessage(body.room);
+        this.server.to(body.room).emit('fetchUserUnreadMessage');
+      }
+
+      if (!isUserOnline) {
         return {
           isOnline: false,
           message: savedMessage,
@@ -222,6 +228,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<void> {
     try {
       await this.adminUnreadMsgService.removeUnreadMessages(body.userId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @SubscribeMessage('setChatOpen')
+  async setChatOpen(@MessageBody() body: SocketBody): Promise<void> {
+    try {
+      const userId = await this.userService.getUserIdFromToken(body.userToken);
+      this.roomManager.openUserChat(userId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @SubscribeMessage('setChatClose')
+  async setChatClose(@MessageBody() body: SocketBody): Promise<void> {
+    try {
+      const userId = await this.userService.getUserIdFromToken(body.userToken);
+      this.roomManager.closeUserChat(userId);
     } catch (error) {
       console.log(error);
     }
