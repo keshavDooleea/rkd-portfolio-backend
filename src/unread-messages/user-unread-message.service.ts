@@ -14,4 +14,8 @@ export class UserUnreadMessageService extends AbsUnreadMessageService<
   constructor(private readonly userRepository: UserUnreadMessageRepository) {
     super(userRepository);
   }
+
+  async getUserUnreadMessages(userId) {
+    return await this.repository.findById(userId);
+  }
 }

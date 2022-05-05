@@ -78,7 +78,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: SocketBody,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    this.roomManager.addNewRoom(body.userId, client);
+    // this.roomManager.addNewRoom(body.userId, client);
   }
 
   @SubscribeMessage('getInitialMessages')
@@ -183,12 +183,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const unreadMessagesDocs =
         await this.adminUnreadMsgService.getAllUnreadMessages();
-      return unreadMessagesDocs.map((doc) => {
-        return {
-          userId: doc._id,
-          unreadCount: doc.count,
-        } as UnreadMessageBody;
-      });
+      return this.adminUnreadMsgService.mapDocsToObject(unreadMessagesDocs);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @SubscribeMessage('getUserUnreadMessages')
+  async getUserUnreadMessages(
+    @MessageBody() body: SocketBody,
+  ): Promise<UnreadMessageBody> {
+    try {
+      const userId = await this.userService.getUserIdFromToken(body.userToken);
+      const unreadMessagesDocs =
+        await this.userUnreadMsgService.getUserUnreadMessages(userId);
+      return this.userUnreadMsgService.mapDocsToObject(unreadMessagesDocs)[0];
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @SubscribeMessage('clearUserUnreadMessages')
+  async clearUserUnreadMessages(
+    @MessageBody() body: SocketBody,
+  ): Promise<Object> {
+    try {
+      const userId = await this.userService.getUserIdFromToken(body.userToken);
+      await this.userUnreadMsgService.removeUnreadMessages(userId);
+      return { status: 200 };
     } catch (error) {
       console.log(error);
     }

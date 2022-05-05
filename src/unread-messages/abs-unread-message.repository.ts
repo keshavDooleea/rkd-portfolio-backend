@@ -20,7 +20,14 @@ export abstract class AbsUnreadMessageRepository<T, G> {
   }
 
   async removeUnreadMessages(userId: string) {
-    await this.unreadMesssageModel.findByIdAndDelete(userId);
+    try {
+      await this.unreadMesssageModel.findByIdAndDelete(userId);
+    } catch (error) {}
+  }
+
+  async findById(userId: string): Promise<T[]> {
+    const messages = await this.unreadMesssageModel.findById(userId);
+    return messages ? [messages] : [];
   }
 
   async findAllUnreadMessages(): Promise<T[]> {

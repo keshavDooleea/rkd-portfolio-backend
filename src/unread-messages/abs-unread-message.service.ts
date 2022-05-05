@@ -1,4 +1,6 @@
+import { UnreadMessageBody } from 'src/utils/constants';
 import { AbsUnreadMessageRepository } from './abs-unread-message.repository';
+import { UnreadMessageDocument } from './schemas/unread-message.schema';
 
 export abstract class AbsUnreadMessageService<T, G> {
   constructor(
@@ -17,5 +19,16 @@ export abstract class AbsUnreadMessageService<T, G> {
 
   async removeUnreadMessages(userId: string): Promise<void> {
     await this.repository.removeUnreadMessages(userId);
+  }
+
+  mapDocsToObject(
+    unreadMessagesDocs: UnreadMessageDocument[],
+  ): UnreadMessageBody[] {
+    return unreadMessagesDocs.map((doc: UnreadMessageDocument) => {
+      return {
+        userId: doc._id,
+        unreadCount: doc.count,
+      } as UnreadMessageBody;
+    });
   }
 }

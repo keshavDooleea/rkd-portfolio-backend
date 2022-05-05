@@ -22,3 +22,7 @@ export class UserUnreadMessage extends UnreadMessage {}
 export type UserUnreadMessageDocument = UserUnreadMessage & Document;
 export const UserUnreadMessageSchema =
   SchemaFactory.createForClass(UserUnreadMessage);
+
+export type UnreadMessageDocument =
+  | AdminUnreadMessageDocument
+  | UserUnreadMessageDocument;
