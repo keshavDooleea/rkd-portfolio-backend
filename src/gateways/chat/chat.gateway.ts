@@ -10,6 +10,7 @@ import {
 import { Socket, Server } from 'socket.io';
 import {
   CHAT_SOCKET_NAMESPACE,
+  OfflineMessage,
   SocketBody,
   UnreadMessageBody,
 } from 'src/utils/constants';
@@ -62,7 +63,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    this.roomManager.disconnect(client.id);
+    this.roomManager.disconnect(client);
     this.roomManager.emitUpdateRooms(this.server);
   }
 
@@ -71,14 +72,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     this.roomManager.RKDjoinAllRooms(client);
-  }
-
-  @SubscribeMessage('RKDjoinRoom')
-  async handleRKDjoinRoom(
-    @MessageBody() body: SocketBody,
-    @ConnectedSocket() client: Socket,
-  ): Promise<void> {
-    // this.roomManager.addNewRoom(body.userId, client);
   }
 
   @SubscribeMessage('getInitialMessages')
@@ -127,7 +120,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('newRKDMessage')
-  async handleRKDMessage(@MessageBody() body: SocketBody): Promise<void> {
+  async handleRKDMessage(
+    @MessageBody() body: SocketBody,
+  ): Promise<OfflineMessage> {
     try {
       const savedMessage = await this.userService.saveMessage(
         body.room,
@@ -139,6 +134,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // save message if user is offline
       if (!this.roomManager.isUserConnected(body.room)) {
         await this.userUnreadMsgService.saveUnreadMessage(body.room);
+
+        return {
+          isOnline: false,
+          message: savedMessage,
+        };
       }
     } catch (error) {
       console.log(error);

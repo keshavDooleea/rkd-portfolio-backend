@@ -16,11 +16,12 @@ export class RoomManager {
     }
   }
 
-  disconnect(clientIdArg: string) {
+  disconnect(client: Socket) {
     this.rooms.forEach((clientId, userId) => {
-      if (clientId === clientIdArg) {
-        console.log(`Client disconnected: ${userId}`);
+      if (clientId === client.id) {
+        client.leave(userId);
         this.rooms.delete(userId);
+        console.log(`Client disconnected: ${userId}`);
         return;
       }
     });
