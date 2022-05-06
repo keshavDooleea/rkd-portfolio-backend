@@ -5,6 +5,7 @@ import { ChatGateway } from 'src/gateways/chat/chat.gateway';
 import { UnreadMessageModule } from './unread-messages/unread-message.module';
 import { ChatController } from './controllers/chat.controller';
 import { UserModule } from './users/user.module';
+import { EmailService } from './email/email.service';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from './users/user.module';
     UnreadMessageModule,
   ],
   controllers: [ChatController],
-  providers: [ChatGateway],
+  providers: [ChatGateway, EmailService],
+  exports: [EmailService],
 })
 export class AppModule {}

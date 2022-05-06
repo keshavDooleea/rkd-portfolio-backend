@@ -21,6 +21,7 @@ import { UserDocument } from 'src/users/schemas/user.schema';
 import { RoomManager } from 'src/room/room-manager';
 import { AdminUnreadMessageService } from 'src/unread-messages/admin-unread-message.service';
 import { UserUnreadMessageService } from 'src/unread-messages/user-unread-message.service';
+import { EmailService } from 'src/email/email.service';
 
 @WebSocketGateway({ namespace: CHAT_SOCKET_NAMESPACE })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -34,6 +35,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly userUnreadMsgService: UserUnreadMessageService,
     private readonly userService: UserService,
     private readonly userTokenManager: UserTokenManager,
+    private readonly emailService: EmailService,
   ) {
     this.roomManager = new RoomManager(this.userService.getRKDId());
   }
@@ -113,6 +115,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // save message if im offline
       if (!this.roomManager.isRkdConnected()) {
         await this.adminUnreadMsgService.saveUnreadMessage(userId);
+        await this.emailService.sendEmailToRKD(userId, savedMessage.message);
       }
     } catch (error) {
       console.log(error);
