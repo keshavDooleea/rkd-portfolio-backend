@@ -1,6 +1,7 @@
 import mailer, { createTransport } from 'nodemailer';
 import { Injectable } from '@nestjs/common';
 import { IMail, IMailResponse } from './email.interface';
+import { Message } from 'src/users/schemas/message.schema';
 
 @Injectable()
 export class EmailService {
@@ -36,12 +37,25 @@ export class EmailService {
           reject({ status: 500, message: error });
         } else {
           console.log(
-            `Email by User ${mail.userId} sent to ${mail.to} successfully: ${info.response}`,
+            `Email by ${mail.destinationInfo} sent to ${mail.to} successfully: ${info.response}`,
           );
           resolve({ status: 200, message: 'Email sent successfully' });
         }
       });
     });
+  }
+
+  private getUserEmailTemplate(message: Message): string {
+    return `<div>
+    <small>Reetesh said at ${message.createdAt}:</small>
+    </br>
+    <p>${message.message}<p>
+    </br>
+    </br>
+    <a href="https://www.rkdooleea.com/?showChat=true">
+      Click here to view message at https://www.rkdooleea.com
+    </a>
+  </div>`;
   }
 
   async sendEmailToRKD(userId: string, message: string): Promise<void> {
@@ -50,7 +64,23 @@ export class EmailService {
       to: `kdooleea@yahoo.ca`, // to my other email
       subject: `RKD - New Message by User ${userId}`,
       text: message, // body
-      userId,
+      destinationInfo: `User ${userId}`,
+    };
+
+    try {
+      await this.sendMail(mail);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async sendEmailToUser(userEmail: string, message: Message): Promise<void> {
+    const mail: IMail = {
+      from: 'rkdooleea@yahoo.com', // me sending
+      to: `kdooleea@yahoo.ca, ${userEmail}`, // to my other email
+      subject: 'New Message from Reetesh Dooleea [RKD Portfolio]',
+      html: this.getUserEmailTemplate(message), // body
+      destinationInfo: 'Myself',
     };
 
     try {

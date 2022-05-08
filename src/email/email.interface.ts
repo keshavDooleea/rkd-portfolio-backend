@@ -8,8 +8,9 @@ export interface IMail {
   from: string;
   to: string;
   subject: string;
-  text: string;
-  userId: string;
+  text?: string;
+  html?: string;
+  destinationInfo: string;
 }
 
 export interface IMailResponse {

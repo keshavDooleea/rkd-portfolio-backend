@@ -141,6 +141,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!isUserOnline || !isChatOpen) {
         await this.userUnreadMsgService.saveUnreadMessage(body.room);
         this.server.to(body.room).emit('fetchUserUnreadMessage');
+
+        // email message to user validation
+        if (!this.roomManager.hasQueriedUserEmail(body.room)) {
+          const email = (await this.userService.getUserById(body.room)).email;
+          this.roomManager.setUserEmail(body.room, email);
+        }
+
+        if (this.roomManager.isUserEmailValid(body.room)) {
+          // all validation correct
+          await this.emailService.sendEmailToUser(
+            this.roomManager.getUserEmail(body.room),
+            savedMessage,
+          );
+        }
       }
 
       if (!isUserOnline) {
@@ -259,6 +273,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const userId = await this.userService.getUserIdFromToken(body.userToken);
       this.roomManager.closeUserChat(userId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @SubscribeMessage('updateUserEmail')
+  async updateUserEmail(@MessageBody() body: SocketBody): Promise<void> {
+    if (!body.userToken) return;
+
+    try {
+      const userId = await this.userService.getUserIdFromToken(body.userToken);
+      this.roomManager.setUserEmail(userId, body.data.userEmail);
     } catch (error) {
       console.log(error);
     }

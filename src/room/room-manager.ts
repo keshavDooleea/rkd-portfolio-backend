@@ -3,6 +3,10 @@ import { Socket, Server } from 'socket.io';
 interface IChatRoomDetail {
   socketId: string;
   isChatOpen: boolean;
+  userEmail: {
+    hasQueriedDB: boolean;
+    email: string;
+  };
 }
 
 export class RoomManager {
@@ -17,7 +21,14 @@ export class RoomManager {
   addNewRoom(userId: string, client: Socket) {
     if (!this.rooms.has(userId)) {
       client.join(userId);
-      this.rooms.set(userId, { socketId: client.id, isChatOpen: false });
+      this.rooms.set(userId, {
+        socketId: client.id,
+        isChatOpen: false,
+        userEmail: {
+          hasQueriedDB: false,
+          email: '',
+        },
+      });
     }
   }
 
@@ -71,5 +82,31 @@ export class RoomManager {
 
   isUserChatOpen(userId: string): boolean {
     return this.rooms.get(userId).isChatOpen;
+  }
+
+  hasQueriedUserEmail(userId: string): boolean {
+    return this.rooms.get(userId).userEmail.hasQueriedDB;
+  }
+
+  getUserEmail(userId: string) {
+    return this.rooms.get(userId).userEmail.email;
+  }
+
+  getUserRoom(userId: string) {
+    return this.rooms.get(userId);
+  }
+
+  setUserEmail(userId: string, email: string) {
+    const user = this.rooms.get(userId);
+
+    user.userEmail.hasQueriedDB = true;
+    user.userEmail.email = email;
+
+    this.rooms.set(userId, user);
+  }
+
+  isUserEmailValid(userId: string) {
+    const email = this.rooms.get(userId).userEmail.email;
+    return email && email.length > 0;
   }
 }
