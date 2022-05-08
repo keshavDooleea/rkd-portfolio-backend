@@ -202,6 +202,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async getUserUnreadMessages(
     @MessageBody() body: SocketBody,
   ): Promise<UnreadMessageBody> {
+    if (!body.userToken) return;
+
     try {
       const userId = await this.userService.getUserIdFromToken(body.userToken);
       const unreadMessagesDocs =
@@ -216,6 +218,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async clearUserUnreadMessages(
     @MessageBody() body: SocketBody,
   ): Promise<Object> {
+    if (!body.userToken) return;
+
     try {
       const userId = await this.userService.getUserIdFromToken(body.userToken);
       await this.userUnreadMsgService.removeUnreadMessages(userId);
@@ -238,6 +242,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('setChatOpen')
   async setChatOpen(@MessageBody() body: SocketBody): Promise<void> {
+    if (!body.userToken) return;
+
     try {
       const userId = await this.userService.getUserIdFromToken(body.userToken);
       this.roomManager.openUserChat(userId);
@@ -248,6 +254,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('setChatClose')
   async setChatClose(@MessageBody() body: SocketBody): Promise<void> {
+    if (!body.userToken) return;
+
     try {
       const userId = await this.userService.getUserIdFromToken(body.userToken);
       this.roomManager.closeUserChat(userId);

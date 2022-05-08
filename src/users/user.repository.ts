@@ -24,6 +24,23 @@ export class UserRepository {
     return await this.userModel.find();
   }
 
+  async updateEmail(userId: string, newEmail: string): Promise<User> {
+    return new Promise(async (resolve, reject) => {
+      await this.userModel
+        .findByIdAndUpdate(
+          { _id: userId },
+          { email: newEmail },
+          (err: Error, user: User) => {
+            if (err || !user) {
+              reject(err);
+            }
+            resolve(user);
+          },
+        )
+        .clone();
+    });
+  }
+
   async findUserMessages(
     userFilterQuery: FilterQuery<User>,
   ): Promise<UserDocument> {

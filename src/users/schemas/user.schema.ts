@@ -6,6 +6,9 @@ import { Document, Types } from 'mongoose';
 export class User {
   @Prop({ type: [Types.ObjectId], default: [], ref: Message.name })
   messages: Message[];
+
+  @Prop()
+  email: string;
 }
 
 export type UserDocument = User & Document;

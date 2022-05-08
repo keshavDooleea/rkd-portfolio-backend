@@ -14,6 +14,7 @@ export class UserService {
   async createNewUser(): Promise<UserDocument> {
     return await this.userRepository.create({
       messages: [],
+      email: '',
     });
   }
 
@@ -57,5 +58,9 @@ export class UserService {
     };
 
     return await this.userRepository.saveMessage(newMessage, userId);
+  }
+
+  async saveUserEmail(userId: string, email: string): Promise<void> {
+    await this.userRepository.updateEmail(userId, email);
   }
 }
